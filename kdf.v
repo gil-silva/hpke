@@ -135,10 +135,15 @@ fn (s Suite) key_schedule(mode u8, shared_secret []u8, info []u8, o SetupOpts) !
 
 // export_secret derives an exporter value over the exporter secret (RFC
 // 9180, section 5.3): the output length must be between 1 and 2^16 - 1
-// bytes.
+// bytes and within the HKDF-Expand limit of the suite KDF, 255 bytes times
+// the hash size Nh.
 fn export_secret(s Suite, exporter_secret []u8, context []u8, l int) ![]u8 {
 	if l < 1 || l > 65535 {
 		return verror('export size out of range: must be between 1 and 65535, got ${l}')
+	}
+	limit := 255 * s.nh()
+	if l > limit {
+		return verror('export size out of range: up to ${limit} bytes for this suite KDF, got ${l}')
 	}
 	return s.labeled_expand(exporter_secret, 'sec', context, l)!
 }

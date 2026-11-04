@@ -212,6 +212,11 @@ fn main() {
 }
 ```
 
+The cap: the suite's HKDF-Expand derives at most `255 * Nh` bytes, where `Nh`
+is the output size of the suite KDF's hash (8160 for HKDF-SHA256, 16320 for
+HKDF-SHA512). Sizes within `1..65535` but past the cap fail with a
+`ValidationError` too.
+
 ### Error taxonomy
 
 The module distinguishes unsupported protocol parameters from invalid inputs,
@@ -301,7 +306,7 @@ The main entry points:
 | Type | Raised by | Meaning |
 |---|---|---|
 | `UnsupportedError` | `new_suite`, `seal`/`open` | unknown mode, KDF or AEAD identifier, or an operation the export-only AEAD cannot provide; the AES-GCM suites fall here (not implemented in pure V) |
-| `ValidationError` | setup, export | invalid inputs: key material not exactly 32 bytes, incomplete or extraneous PSK/sender-key usage, export sizes outside 1..65535 |
+| `ValidationError` | setup, export | invalid inputs: key material not exactly 32 bytes, incomplete or extraneous PSK/sender-key usage, export sizes outside 1..65535 or past the suite KDF's HKDF-Expand limit (255 * Nh) |
 | `chacha20poly1305.AuthenticationError` | `open` | ciphertext does not authenticate (corruption, replay, wrong receiver context) |
 | `x25519.{LengthError,LowOrderPointError}` | KEM | malformed key material or a low order point |
 

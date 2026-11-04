@@ -324,4 +324,14 @@ fn test_usage_and_validation() {
 	assert export_32.len == 32
 	export_max := sender.export([]u8{}, 255 * 32)!
 	assert export_max.len == 255 * 32
+
+	// One byte past the suite's HKDF-Expand limit fails as a validation
+	// error, not as the raw error of the underlying HKDF.
+	mut limit_rejected := false
+	limit_export := sender.export([]u8{}, 255 * 32 + 1) or {
+		limit_rejected = err is ValidationError
+		[]u8{}
+	}
+	_ = limit_export
+	assert limit_rejected
 }
